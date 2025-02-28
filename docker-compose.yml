@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: farmers_marketplace_api
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_PORT=5435
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234567
+      - POSTGRES_DB=RevoDB
+      - DB_Host=farmers_marketplace_db
+    volumes:
+      - ./src:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - farmers_marketplace_network
+    ports:
+      - "3001:3000"
+    restart: always
+  postgres:
+    image: postgres:13
+    container_name: farmers_marketplace_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234567
+      POSTGRES_DB: RevoDB
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - farmers_marketplace_network
+    restart: unless-stopped
+    ports:
+      - "5435:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+      start_period: 10s
+volumes:
+  postgres_data:
+networks:
+  farmers_marketplace_network:
+    driver: bridge
